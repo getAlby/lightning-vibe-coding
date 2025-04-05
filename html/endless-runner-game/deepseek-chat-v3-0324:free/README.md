@@ -1,4 +1,4 @@
-# Paywall Confetti
+# Endless Runner
 
 This was created using VSCode Cline plugin using deepseek via OpenRouter.
 
