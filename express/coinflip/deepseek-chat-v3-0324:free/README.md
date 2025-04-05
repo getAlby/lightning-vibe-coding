@@ -4,7 +4,7 @@ This was created using VSCode Cline plugin using deepseek via OpenRouter.
 
 [See the prompt](./prompt.txt)
 
-To install run:
+To install open the app folder, then run:
 
 ```bash
   npm i
