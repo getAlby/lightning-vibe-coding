@@ -18,6 +18,10 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
 - Paywall Confetti (Shows confetti after successful payment) - [Deepseek](html/paywall-confetti/deepseek-chat-v3-0324:free/README.md) - [Gemini](html/paywall-confetti/gemini-2.5-pro/README.md)
 - Endless Runner game (Pay to continue playing after player dies) - [Deepseek](html/endless-runner-game/deepseek-chat-v3-0324:free/README.md)
 
+### Express app
+
+- Coinflip game (Pay 10 sats but earn 20 if you guess correctly) - [Deepseek](express/coinflip/deepseek-chat-v3-0324:free/README.md)
+
 ## How it works
 
 Currently most LLMs have trouble with getting up-to-date info which can cause them to "guess" how payments should be implemented. So, we work around this by asking the LLM to fetch the README and read it first.
@@ -46,8 +50,8 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
 
 Pull requests welcome! Please ensure that you follow the current directories as examples:
 
-- put in a folder like `environment`/`demo-short-description`/`model-name` where `environment` can be `html` or `react` or `nodejs` or `nextjs` etc. `demo-short-description` should hint and what the demo is about, and `model-name` should be the exact model name of the LLM.
-- All prompts are refined and work with one-shot commands
+- put in a folder like `environment`/`demo-short-description`/`model-name` where `environment` can be `html` or `react` or `express` or `nextjs` etc. `demo-short-description` should hint and what the demo is about, and `model-name` should be the exact model name of the LLM.
+- All prompts are refined and work with one-shot commands unless specified
 - Include clear README instructions on what tools were used to execute the prompt, how to view the output, and prompt.txt for each implementation
 
 ### Contributing LLM options

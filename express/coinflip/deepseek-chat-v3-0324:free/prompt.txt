@@ -1,0 +1,45 @@
+Make a simple coinflip game that the user has to pay in satoshis before they flip. If they win, they receive 2x the amount they paid.
+
+For now the user must pay 10 sats and if they win, they receive 20 sats.
+
+BACKEND
+
+Make an express server with typescript.
+
+The backend will use a NWC connection string for interacting with a lightning wallet: which must be passed as an environment variable by the user e.g. NWC_URL="nostr+walletconnect://..." and should use the Alby JS SDK NWCClient class.
+
+the backend should have an index endpoint should simply host the HTML content of the frontend.
+
+API ENDPOINT 1
+
+The endpoint allows the user to request a coin flip. The endpoint must accept a reward invoice (of 20 sats) and a choice (heads or tails).
+
+The backend should check its own wallet balance and fail if it has less than 20 sats.
+
+The backend should generate its own invoice of 10 sats and in the background poll for up to 10 minutes to see if the invoice was paid.
+
+The backend should return this invoice as a response to the request.
+
+Once the invoice was paid, stop polling for this invoice and "flip a coin" by using random. If the coin matches what the user guessed, internally mark this invoice as paid (so we don't pay twice) and pay the reward invoice. Keep track of the flip state (heads or tails) per invoice so we can return it when requested.
+
+API ENDPOINT 2
+
+given an lightning invoice, look up the status of the coin flip (unpaid, heads or tails)
+
+FRONTEND
+
+The frontend should just be simple html with embedded javascript
+
+Create a mobile friendly html page with title "Coin flip" and allow the user to choose heads or tails.
+
+Once the user has chosen, if the user is not connected to a wallet, open the bitcoin connect modal to allow the user to connect their wallet.
+
+Once the user has connected their wallet, show a loading screen showing a coin flipping.
+
+Then generate a 20 sat invoice from their wallet, do the request to the backend to create a coinflip passing the option they selected and the invoice created.
+
+Once the invoice is paid, poll the second endpoint to check the status of the coin flip.
+
+Once the user has connected is paid, show a confetti animation and set the preimage once the invoice is paid. Make sure to allow the user to pay either by connecting their wallet or paying externally (by polling the invoice). Do not modify the styling of the button in any way or add any text on the screen. Do not show any alert dialogs. Do not add any TODOs or "Optional" comments in the code.
+
+Before you start, fetch the READMEs from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-sdk/blob/master/README.md one at a time so you have the latest information. If you fail to read the content please print this as the app will not work correctly!
