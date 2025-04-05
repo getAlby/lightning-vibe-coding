@@ -1,0 +1,37 @@
+Make a mobile-friendly endless runner game inside a single HTML file called index.html.
+
+There is only a single action (click/tap/press spacebar) to jump.
+
+The player should have a score that starts at zero.
+
+Every time they successfully pass an obstacle their level will increase by 1 and their number of jumps will reset.
+
+Each time their level is increased, they can do an additional double-jump.
+
+On the top corner show their level and number of jumps they can do.
+
+Each time their level is increased, or the number of jumps changes, the text should animate somehow so that the user sees the change.
+
+Whenever the player touches the ground, their number of jumps is reset to their level number.
+
+Obstacles should get taller and wider over time and there should be a variety of different obstacles.
+
+Obstacles must always be touching the ground and not hanging in mid-air
+
+Make sure the Obstacles are never more difficult than the player's current level.
+
+Make sure the player only dies if the player bounding box clearly overlaps with the obstacle.
+
+Slowly over time the speed of the player should increase.
+
+If the player dies, they can either click pay to continue, or click restart.
+
+if the player successfully pays, the player's jumps should be fully restored to their level number, all current obstacles should be removed, and the game should resume playing, removing the game over screen.
+
+If the player clicks restart, restart the game, setting the player level back to 1 and their number of jumps back to 1.
+
+The pay to continue button should be a bitcoin connect pay button in the middle which will request a payment of 1 satoshi from rolznz@getalby.com. Once the invoice is paid, show a confetti animation and set the preimage once the invoice is paid. Make sure to allow the user to pay either by connecting their wallet or paying externally (by polling the invoice). The pay button element should be completely re-created each time the player dies.
+
+Before you start, fetch the READMEs one at a time from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-lightning-tools/blob/master/README.md so you have the latest information (just read the output directly, don't save the files unless you fail to read the content). Make sure to only use the imports specified in the README, do not guess any new imports.
+
+YOU ONLY HAVE ONE ATTEMPT, THIS IS A ONE-SHOT PROMPT, DO YOUR BEST AND DO NOT LEAVE TODOs!

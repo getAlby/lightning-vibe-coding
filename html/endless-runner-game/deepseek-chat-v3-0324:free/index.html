@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Endless Runner</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            touch-action: manipulation; /* Prevent zooming/panning on mobile */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Limit max width on larger screens */
+            height: 400px;
+            border: 1px solid #ccc;
+            background-color: #87CEEB; /* Light sky blue background */
+            overflow: hidden; /* Keep elements inside */
+            cursor: pointer; /* Indicate clickable area for jump */
+        }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px; /* Visual ground */
+            background-color: #8B4513; /* Saddle brown */
+        }
+        #player {
+            position: absolute;
+            bottom: 20px; /* Start on the ground */
+            left: 50px;
+            width: 40px;
+            height: 40px;
+            background-color: #FFD700; /* Gold color */
+            border: 2px solid #DAA520; /* Goldenrod border */
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .obstacle {
+            position: absolute;
+            bottom: 20px; /* Sit on the ground */
+            background-color: #DC143C; /* Crimson red */
+            border: 2px solid #8B0000; /* Dark red border */
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 1.2em;
+            color: #000; /* Black text */
+            background-color: rgba(255, 255, 255, 0.7); /* Semi-transparent white background */
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 10;
+            user-select: none; /* Prevent text selection */
+        }
+        #score-board span {
+            display: inline-block; /* Needed for animation */
+            min-width: 20px; /* Ensure space for numbers */
+            text-align: right;
+            transition: transform 0.3s ease-out, color 0.3s ease-out;
+        }
+        .score-animate {
+            transform: scale(1.4) rotate(5deg);
+            color: #006400; /* Dark green */
+            font-weight: bold;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+        }
+        #game-over-screen h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px #000;
+        }
+        #game-over-screen button {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            margin: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+        }
+        #restart-button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+        #pay-button-container {
+            margin-top: 15px;
+            min-height: 50px; /* Ensure space for the button */
+        }
+        /* Style the Bitcoin Connect button */
+        bc-pay-button {
+            --bc-color-brand: #ff8f00; /* Alby orange */
+            --bc-color-brand-dark: #ff8f00;
+            font-size: 1.1em;
+            padding: 12px 25px !important; /* Override default padding if needed */
+        }
+        /* Confetti styles */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00; /* Example color */
+            opacity: 0.9;
+            border-radius: 50%;
+            animation: fall 3s linear forwards;
+            pointer-events: none; /* Prevent interaction */
+            z-index: 30;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.9; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ground"></div>
+        <div id="score-board">
+            Level: <span id="level">1</span> | Jumps: <span id="jumps">1</span>
+        </div>
+        <div id="player"></div>
+        <div id="game-over-screen">
+            <h2>Game Over!</h2>
+            <div id="pay-button-container">
+                <!-- Bitcoin Connect Pay Button will be added here -->
+            </div>
+            <button id="restart-button">Restart</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { init, launchPaymentModal, closeModal } from 'https://esm.sh/@getalby/bitcoin-connect@3.7.0';
+        import 'https://esm.sh/@getalby/bitcoin-connect@3.7.0'; // Import the web component definitions
+        import { LightningAddress, Invoice } from "https://esm.sh/@getalby/lightning-tools@5.0.0";
+
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreBoardLevel = document.getElementById('level');
+        const scoreBoardJumps = document.getElementById('jumps');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const restartButton = document.getElementById('restart-button');
+        const payButtonContainer = document.getElementById('pay-button-container');
+        const groundHeight = 20; // Match CSS
+
+        // --- Bitcoin Connect Init ---
+        try {
+            init({ appName: 'Endless Runner Game' });
+        } catch (error) {
+            console.error("Failed to initialize Bitcoin Connect:", error);
+            // Handle initialization error if necessary (e.g., show a message)
+        }
+
+        // --- Game State ---
+        let playerLevel = 1;
+        let jumpsLeft = 1;
+        let playerY = groundHeight; // Start Y position on the ground
+        let playerVelocityY = 0;
+        let gravity = 0.8;
+        let jumpPower = 16; // Slightly increased jump power
+        let obstacles = [];
+        let initialObstacleFrequency = 120; // Initial frames between obstacles
+        let obstacleFrequencyDecrease = 2; // How much frequency decreases per level
+        let frameCount = 0;
+        let gameSpeed = 4; // Initial speed
+        let speedIncreaseFactor = 0.08; // How much speed increases per level
+        let minObstacleGap = 280; // Minimum pixel gap between obstacles
+        let maxObstacleGap = 500; // Maximum pixel gap between obstacles
+        let nextObstacleFrame;
+        let isGameOver = false;
+        let animationFrameId;
+        let currentInvoice = null; // Holds the current Invoice object from lightning-tools
+        let paymentCheckInterval = null;
+        let isPaying = false; // Flag to prevent multiple payment attempts/invoice requests
+        let gameRunning = false; // Flag to control game loop start
+        let payButton = null; // Will hold the reference to the current pay button
+
+        // --- Function to Create Pay Button ---
+        function createAndSetupPayButton() {
+            // Remove existing button if it exists and is still in the container
+            if (payButton && payButton.parentNode === payButtonContainer) {
+                payButtonContainer.removeChild(payButton);
+            }
+
+            // Create new button
+            payButton = document.createElement('bc-pay-button');
+            payButton.setAttribute('title', 'Pay 1 sat to Continue');
+            payButton.setAttribute('payment-methods', 'all'); // Allow internal (WebLN) and external (polling)
+
+            // Add event listeners to the new button
+            payButton.addEventListener('click', handlePayButtonClick);
+            document.addEventListener('bc:onpaid', handlePaymentEvent);
+
+            // Append the new button
+            payButtonContainer.appendChild(payButton);
+            console.log("Pay button created and setup.");
+        }
+
+
+        // --- Utility Functions ---
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function animateScore(element) {
+            element.classList.add('score-animate');
+            // Use transitionend event for more robust animation handling if needed,
+            // but setTimeout is simpler for this case.
+            setTimeout(() => {
+                element.classList.remove('score-animate');
+            }, 350); // Match transition duration + small buffer
+        }
+
+        function updateScoreBoard() {
+            const currentLevelText = scoreBoardLevel.textContent;
+            const currentJumpsText = scoreBoardJumps.textContent;
+
+            if (currentLevelText !== String(playerLevel)) {
+                scoreBoardLevel.textContent = playerLevel;
+                animateScore(scoreBoardLevel);
+            }
+            // Always update jumps display in case it changed without level change
+            if (currentJumpsText !== String(jumpsLeft)) {
+                scoreBoardJumps.textContent = jumpsLeft;
+                animateScore(scoreBoardJumps);
+            }
+        }
+
+        function resetJumps() {
+            // Only reset if player is on or very near the ground
+            if (playerY <= groundHeight + 1) {
+                if (jumpsLeft !== playerLevel) {
+                    jumpsLeft = playerLevel;
+                    updateScoreBoard();
+                }
+            }
+        }
+
+        // --- Player Actions ---
+        function jump() {
+            if (isGameOver || jumpsLeft <= 0 || !gameRunning) return;
+            playerVelocityY = jumpPower;
+            jumpsLeft--;
+            updateScoreBoard();
+        }
+
+        // --- Obstacle Management ---
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            const minHeight = 25;
+            // Max height increases with level, but capped to prevent impossible jumps early on
+            const maxHeight = Math.min(gameContainer.offsetHeight * 0.6, 30 + playerLevel * 18);
+            const minWidth = 35;
+            // Max width increases with level
+            const maxWidth = 40 + playerLevel * 6;
+
+            let obsHeight = randomInt(minHeight, maxHeight); // Use let as it might be adjusted
+            const obsWidth = randomInt(minWidth, maxWidth);
+
+            // Ensure obstacle difficulty is manageable based on jump height and level
+            const maxPossibleJumpHeight = calculateMaxJumpHeight(playerLevel);
+            if (obsHeight > maxPossibleJumpHeight * 0.9) { // Don't make it *exactly* the max jump height
+                 // console.log(`Obstacle too high (${obsHeight} vs max ${maxPossibleJumpHeight}), reducing.`);
+                 obsHeight = Math.floor(maxPossibleJumpHeight * 0.8);
+            }
+
+
+            obstacle.style.height = `${obsHeight}px`;
+            obstacle.style.width = `${obsWidth}px`;
+            obstacle.style.left = `${gameContainer.offsetWidth}px`; // Start off-screen right
+            obstacle.passed = false; // Flag to track if player passed it
+
+            gameContainer.appendChild(obstacle);
+            obstacles.push(obstacle);
+
+            // Schedule next obstacle based on current game speed and level
+            const currentObstacleFrequency = Math.max(40, initialObstacleFrequency - playerLevel * obstacleFrequencyDecrease); // Ensure frequency doesn't go below a minimum
+            const minFramesGap = minObstacleGap / gameSpeed;
+            const maxFramesGap = maxObstacleGap / gameSpeed;
+            nextObstacleFrame = frameCount + randomInt(minFramesGap, maxFramesGap) + currentObstacleFrequency;
+        }
+
+        // Estimate max jump height for difficulty scaling
+        function calculateMaxJumpHeight(level) {
+            let tempY = groundHeight;
+            let tempVel = 0;
+            let maxH = groundHeight;
+            let jumpsUsed = 0;
+
+            // Simulate first jump
+            tempVel = jumpPower;
+            jumpsUsed++;
+
+            // Simulate subsequent jumps (worst case: jump at peak)
+            while (jumpsUsed < level) {
+                 // Find peak of current jump arc
+                 let currentPeak = tempY;
+                 let peakVel = tempVel;
+                 while(peakVel > 0) {
+                    peakVel -= gravity;
+                    currentPeak += peakVel;
+                 }
+                 // Jump again from peak
+                 tempVel = jumpPower; // Apply full jump power again
+                 tempY = currentPeak; // Start next jump from peak
+                 jumpsUsed++;
+            }
+
+             // Calculate final peak after last jump
+             while(tempVel > 0) {
+                tempVel -= gravity;
+                tempY += tempVel;
+             }
+             maxH = Math.max(maxH, tempY);
+
+            return maxH - groundHeight; // Return height relative to ground
+        }
+
+
+        function moveObstacles() {
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                let currentLeft = parseFloat(obstacle.style.left);
+                currentLeft -= gameSpeed;
+                obstacle.style.left = `${currentLeft}px`;
+
+                // Remove obstacles that are off-screen left
+                if (currentLeft + obstacle.offsetWidth < 0) {
+                    obstacle.remove();
+                    obstacles.splice(i, 1);
+                }
+            }
+        }
+
+        // --- Collision Detection ---
+        function checkCollision() {
+            // Only check collision if game is running
+            if (!gameRunning || isGameOver) return;
+
+            const playerRect = player.getBoundingClientRect();
+            // Adjust playerRect slightly inwards for more forgiving collision
+            const tolerance = 5;
+            const playerHitbox = {
+                left: playerRect.left + tolerance,
+                right: playerRect.right - tolerance,
+                top: playerRect.top + tolerance,
+                bottom: playerRect.bottom - tolerance, // Check slightly above the visual bottom
+            };
+
+
+            for (const obstacle of obstacles) {
+                const obstacleRect = obstacle.getBoundingClientRect();
+
+                // Check for overlap using the adjusted hitbox
+                const horizontalOverlap = playerHitbox.right > obstacleRect.left && playerHitbox.left < obstacleRect.right;
+                // Player bottom must be above obstacle top for collision
+                const verticalOverlap = playerHitbox.bottom > obstacleRect.top;
+
+                if (horizontalOverlap && verticalOverlap) {
+                    gameOver();
+                    return; // Exit loop once collision detected
+                }
+
+                // Check for passing obstacle (player's left edge passed obstacle's right edge)
+                if (!obstacle.passed && playerHitbox.left > obstacleRect.right) {
+                    obstacle.passed = true;
+                    playerLevel++;
+                    // Don't reset jumps here, reset happens on ground touch or level up *while* on ground
+                    resetJumps(); // Check if jumps should reset (if player is on ground)
+                    updateScoreBoard();
+                    // Increase speed based on level
+                    gameSpeed = 4 + playerLevel * speedIncreaseFactor;
+                    // console.log(`Level Up: ${playerLevel}, Speed: ${gameSpeed.toFixed(2)}`);
+                }
+            }
+        }
+
+        // --- Game Over & Restart ---
+        function gameOver() {
+            if (isGameOver) return; // Prevent multiple calls
+            console.log("Game Over!");
+            isGameOver = true;
+            gameRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null; // Clear animation frame ID
+            gameOverScreen.style.display = 'flex';
+            isPaying = false; // Reset payment flag
+
+            // Re-create the pay button to ensure a clean state
+            createAndSetupPayButton();
+
+            // Clear any pending payment checks
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+                paymentCheckInterval = null;
+            }
+            currentInvoice = null; // Clear invoice object
+        }
+
+        function restartGame() {
+            console.log("Restarting Game...");
+            isGameOver = false;
+            gameOverScreen.style.display = 'none';
+            playerLevel = 1;
+            jumpsLeft = 1;
+            playerY = groundHeight;
+            playerVelocityY = 0;
+            gameSpeed = 4; // Reset speed
+            frameCount = 0;
+
+            // Remove all existing obstacles from DOM and array
+            obstacles.forEach(obstacle => obstacle.remove());
+            obstacles = [];
+
+            nextObstacleFrame = initialObstacleFrequency; // Reset obstacle timing
+            updateScoreBoard();
+
+            // Clear payment state (button is reset by gameOver)
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+                paymentCheckInterval = null;
+            }
+            currentInvoice = null;
+            isPaying = false;
+            // No need to reset button attributes here, gameOver handles it by recreating
+
+            player.style.bottom = `${playerY}px`; // Reset player position visually
+            startGameLoop(); // Start the game loop again
+        }
+
+        // --- Payment Logic ---
+        async function requestPaymentInvoice() {
+            // Ensure payButton exists before accessing attributes
+            if (!payButton || isPaying || currentInvoice) return;
+            console.log("Requesting payment invoice...");
+            isPaying = true;
+            payButton.setAttribute('disabled', 'true');
+            payButton.textContent = 'Getting Invoice...';
+
+            try {
+                const ln = new LightningAddress("rolznz@getalby.com");
+                await ln.fetch();
+                // Use the Invoice class from lightning-tools
+                const invoiceInstance = await ln.requestInvoice({ satoshi: 1 });
+
+                if (invoiceInstance && invoiceInstance.paymentRequest) {
+                    currentInvoice = invoiceInstance; // Store the Invoice object
+                    // Check if payButton still exists before setting attributes
+                    if (payButton) {
+                        payButton.setAttribute('invoice', currentInvoice.paymentRequest);
+                        console.log("Invoice received:", currentInvoice.paymentRequest);
+                        payButton.textContent = 'Pay 1 sat to Continue';
+                        payButton.removeAttribute('disabled');
+                    } else {
+                         console.warn("Pay button removed before invoice attributes could be set.");
+                    }
+                    isPaying = false; // Ready for payment attempt
+
+                    // Start polling immediately after getting the invoice
+                    startPaymentPolling();
+
+                } else {
+                    throw new Error("Failed to retrieve payment request from Lightning Address.");
+                }
+            } catch (error) {
+                console.error("Error requesting invoice:", error);
+                alert(`Error getting invoice: ${error.message || 'Unknown error'}`);
+                handlePaymentCancel(); // Reset state on error
+            }
+        }
+
+        function startPaymentPolling() {
+            if (paymentCheckInterval) clearInterval(paymentCheckInterval); // Clear existing interval
+            if (!currentInvoice) return; // Don't poll without an invoice
+
+            console.log("Starting payment polling...");
+            paymentCheckInterval = setInterval(async () => {
+                // Stop polling if game restarted or no invoice
+                if (!isGameOver || !currentInvoice) {
+                    console.log("Stopping polling (game not over or no invoice).");
+                    clearInterval(paymentCheckInterval);
+                    paymentCheckInterval = null;
+                    return;
+                }
+
+                try {
+                    // Use the isPaid method of the Invoice object
+                    const paid = await currentInvoice.isPaid();
+                    if (paid && currentInvoice.preimage) {
+                        console.log("Payment detected via polling!");
+                        // Ensure we have the preimage before declaring success
+                        handlePaymentSuccess({ preimage: currentInvoice.preimage });
+                    } else {
+                         // console.log("Polling: Invoice not paid yet.");
+                    }
+                } catch (error) {
+                    // Don't stop polling for verification errors unless critical
+                    console.warn("Polling check failed:", error);
+                }
+            }, 3000); // Check every 3 seconds
+        }
+
+        function handlePaymentSuccess(response) {
+            // Ensure this runs only once per payment and only if game is over state was triggered
+            if (!isGameOver || !currentInvoice) {
+                 console.log("handlePaymentSuccess called but game not over or no invoice. Ignoring.");
+                 return;
+            }
+
+            console.log("Handling Payment Success!", response);
+            // Stop polling and clear invoice immediately to prevent race conditions
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+                paymentCheckInterval = null;
+            }
+            const paidInvoice = currentInvoice; // Keep reference for preimage
+            currentInvoice = null; // Prevent re-processing
+            isPaying = false; // Reset payment attempt flag
+
+            closeModal(); // Close Bitcoin Connect modal if open
+
+            // Set preimage on the button to show success state visually
+            // Check if payButton still exists (it might have been recreated by gameOver if user was fast)
+            if (payButton) {
+                if (response && response.preimage) {
+                    payButton.setAttribute('preimage', response.preimage);
+                    payButton.textContent = 'Payment Received!';
+                    payButton.setAttribute('disabled', 'true'); // Disable after successful payment
+                    console.log("Preimage set:", response.preimage);
+                } else {
+                    console.warn("Payment success handled, but no preimage found in response.");
+                    payButton.textContent = 'Payment Verified!'; // Fallback text
+                    payButton.setAttribute('disabled', 'true');
+                }
+            }
+
+
+            // Confetti effect
+            createConfetti();
+
+            // Restore player state after a short delay for confetti/UI update
+            setTimeout(() => {
+                console.log("Resuming game after payment...");
+                gameOverScreen.style.display = 'none'; // Hide game over screen
+
+                // **Clear existing obstacles**
+                console.log(`Removing ${obstacles.length} obstacles.`);
+                obstacles.forEach(obstacle => obstacle.remove());
+                obstacles = [];
+                isGameOver = false; // Set game over to false *inside* timeout, before starting loop
+                // Schedule the next obstacle normally based on current frame count
+                const currentObstacleFrequency = Math.max(40, initialObstacleFrequency - playerLevel * obstacleFrequencyDecrease);
+                const minFramesGap = minObstacleGap / gameSpeed;
+                const maxFramesGap = maxObstacleGap / gameSpeed;
+                // Ensure nextObstacleFrame is reasonably far in the future after clearing
+                nextObstacleFrame = frameCount + Math.max(minFramesGap, 60); // Add a minimum frame gap
+
+
+                playerY = groundHeight + 50; // Give a little boost off the ground
+                playerVelocityY = jumpPower * 0.7; // Push back into the air gently
+                jumpsLeft = playerLevel; // **Restore jumps to current level**
+                updateScoreBoard(); // Update display immediately
+
+                // Button state is handled by the next call to gameOver
+
+                startGameLoop(); // Resume game loop
+            }, 1800); // Delay for confetti and UI feedback
+        }
+
+        function handlePaymentCancel() {
+            console.log("Payment cancelled or failed to process.");
+            // Don't clear the invoice here, user might still pay externally
+            isPaying = false; // Allow requesting a new invoice if needed
+            // Check if payButton exists before modifying
+            if (payButton) {
+                payButton.removeAttribute('disabled');
+                payButton.textContent = 'Pay 1 sat to Continue';
+            }
+        }
+
+        // --- Confetti ---
+        function createConfetti() {
+            console.log("Creating confetti...");
+            const confettiCount = 120;
+            const colors = ['#FFD700', '#FF8F00', '#f0f0f0', '#87CEEB', '#4CAF50', '#DC143C'];
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            for (let i = 0; i < confettiCount; i++) {
+                const confettiPiece = document.createElement('div');
+                confettiPiece.classList.add('confetti');
+                // Start confetti from the center top area
+                confettiPiece.style.left = `${Math.random() * 60 + 20}%`; // Spread across middle 60%
+                confettiPiece.style.top = `${-Math.random() * 50 - 10}px`; // Start above screen
+                confettiPiece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 6 + 4; // Size between 4px and 10px
+                confettiPiece.style.width = `${size}px`;
+                confettiPiece.style.height = `${size}px`;
+                confettiPiece.style.opacity = `${Math.random() * 0.5 + 0.5}`; // Opacity 0.5 to 1.0
+                confettiPiece.style.animationDuration = `${Math.random() * 2 + 2.5}s`; // Random fall duration (2.5s to 4.5s)
+                confettiPiece.style.animationDelay = `${Math.random() * 0.8}s`; // Random start delay
+
+                gameContainer.appendChild(confettiPiece);
+
+                // Remove confetti element after animation to clean up DOM
+                confettiPiece.addEventListener('animationend', () => {
+                    // Check if parentNode still exists before removing
+                    if (confettiPiece.parentNode) {
+                        confettiPiece.parentNode.removeChild(confettiPiece);
+                    }
+                }, { once: true }); // Ensure listener is removed after firing
+            }
+        }
+
+
+        // --- Game Loop ---
+        function gameLoop() {
+            // Check at the very start if the game should be running
+            if (!gameRunning || isGameOver) {
+                 // console.log(`Game loop stopped. Running: ${gameRunning}, GameOver: ${isGameOver}`);
+                 animationFrameId = null; // Ensure ID is cleared if loop stops
+                 return;
+            }
+
+            frameCount++;
+
+            // --- Player Physics ---
+            playerVelocityY -= gravity;
+            playerY += playerVelocityY;
+
+            // Ground check
+            if (playerY <= groundHeight) {
+                playerY = groundHeight;
+                playerVelocityY = 0;
+                resetJumps(); // Reset jumps when hitting the ground
+            }
+            player.style.bottom = `${playerY}px`;
+
+            // --- Obstacle Handling ---
+            // Check if it's time for a new obstacle *only if* game is running
+            if (gameRunning && (obstacles.length === 0 || frameCount >= nextObstacleFrame)) {
+                createObstacle();
+            }
+            moveObstacles();
+
+            // --- Collision Check ---
+            checkCollision(); // This might set isGameOver to true
+
+            // --- Update Score ---
+            // updateScoreBoard(); // Already called within checkCollision/resetJumps when needed
+
+            // --- Continue Loop ---
+            // Request next frame only if the game hasn't ended in this frame
+            if (gameRunning && !isGameOver) {
+                animationFrameId = requestAnimationFrame(gameLoop);
+            } else {
+                 // If game ended this frame, ensure animationFrameId is null
+                 animationFrameId = null;
+                 console.log("Game loop stopping because gameRunning or isGameOver changed.");
+            }
+        }
+
+        // --- Event Listeners ---
+        function handleInteraction(event) {
+             // Prevent default only for touchstart to avoid breaking spacebar scrolling etc.
+             if (event.type === 'touchstart') {
+                event.preventDefault();
+             }
+
+             // Don't jump if game is over and the interaction is on a button
+             if (isGameOver) {
+                 const target = event.target;
+                 if (target === restartButton || payButtonContainer.contains(target)) {
+                     return;
+                 }
+             }
+             // Trigger jump if game is running
+             if (gameRunning && !isGameOver) {
+                 jump();
+             }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent page scrolling when space is pressed
+                handleInteraction(e);
+            }
+        });
+
+        // Use click for mouse interaction on desktop
+        gameContainer.addEventListener('click', handleInteraction);
+        // Use touchstart for mobile interaction
+        gameContainer.addEventListener('touchstart', handleInteraction, { passive: false });
+
+        restartButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent game jump when clicking restart
+            restartGame();
+        });
+
+        // Renamed handler for clarity
+        async function handlePayButtonClick(e) {
+            e.stopPropagation(); // Prevent game jump
+            // Only request if game is over AND we don't have an invoice/aren't paying
+            // Also check payButton exists
+            if (isGameOver && payButton && !payButton.hasAttribute('invoice') && !isPaying) {
+                 await requestPaymentInvoice();
+            }
+            // If invoice is already set, Bitcoin Connect component handles launching the modal on click.
+        }
+
+        // Renamed handler for clarity
+        function handlePaymentEvent(e) {
+             console.log("bc:onpaid event received", e.detail);
+             // Ensure we have the invoice object associated with this payment if possible
+             // This event fires *after* WebLN payment, polling might have already caught it.
+             if (isGameOver && currentInvoice && e.detail && e.detail.preimage) {
+                 // Validate preimage against the current invoice if possible
+                 if (currentInvoice.validatePreimage(e.detail.preimage)) {
+                     handlePaymentSuccess(e.detail);
+                 } else {
+                     console.warn("bc:onpaid preimage did not match current invoice's payment hash.");
+                 }
+             } else if (isGameOver && e.detail && e.detail.preimage) {
+                 // Handle even if currentInvoice is somehow null, trust the event
+                 console.warn("Handling bc:onpaid without a currentInvoice object reference.");
+                 handlePaymentSuccess(e.detail);
+             } else {
+                 console.log("bc:onpaid event ignored (game not over, no invoice, or no preimage).");
+             }
+        }
+
+
+        // --- Initial Setup ---
+        function initializeGame() {
+            console.log("Initializing Game...");
+            playerY = groundHeight;
+            player.style.bottom = `${playerY}px`;
+            nextObstacleFrame = initialObstacleFrequency; // Initial obstacle timing
+            updateScoreBoard();
+            // Start game automatically:
+            startGameLoop();
+        }
+
+        function startGameLoop() {
+             // Prevent starting if already running
+             if (gameRunning || animationFrameId) {
+                console.warn("startGameLoop called but game is already running or has animation frame.");
+                return;
+             }
+             console.log("Starting Game Loop...");
+             gameRunning = true; // Set game as running
+             isGameOver = false; // Ensure game isn't marked as over
+             // Reset frame count? No, let it continue for obstacle timing.
+             animationFrameId = requestAnimationFrame(gameLoop); // Start the loop
+        }
+
+        // --- Start the game ---
+        createAndSetupPayButton(); // Create the initial button
+        initializeGame();
+
+    </script>
+</body>
+</html>
