@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitcoin Connect Pay Button</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+        }
+    </style>
+    <!-- Bitcoin Connect -->
+    <script type="module" src="https://esm.sh/@getalby/bitcoin-connect@3.7.0"></script>
+    <!-- js-lightning-tools -->
+    <script type="module" src="https://esm.sh/@getalby/lightning-tools@5.0.0"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <bc-pay-button id="pay-button" title="Pay 1 Sat"></bc-pay-button>
+
+    <script type="module">
+        // Import necessary functions/classes
+        import { init as bcInit } from 'https://esm.sh/@getalby/bitcoin-connect@3.7.0';
+        import { LightningAddress } from 'https://esm.sh/@getalby/lightning-tools@5.0.0';
+
+        // Initialize Bitcoin Connect
+        bcInit({
+            appName: 'Simple Pay Button Demo'
+        });
+
+        const payButton = document.getElementById('pay-button');
+        const lightningAddress = 'rolznz@getalby.com';
+        const amountSats = 1;
+        let invoice = null; // To store the generated invoice object
+        let checkPaymentInterval = null;
+
+        // Function to handle payment success
+        function handlePaymentSuccess(preimage) {
+            console.log('Payment successful! Preimage:', preimage);
+            if (checkPaymentInterval) {
+                clearInterval(checkPaymentInterval);
+                checkPaymentInterval = null;
+            }
+            // Trigger confetti
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+            // Optionally disable the button or show a success message
+            payButton.setAttribute('title', 'Paid!');
+            payButton.disabled = true;
+        }
+
+        // 1. Listen for button click to generate invoice
+        payButton.addEventListener('click', async () => {
+            if (payButton.disabled || payButton.getAttribute('invoice')) {
+                // Don't fetch invoice again if already fetched or paid
+                return;
+            }
+
+            payButton.setAttribute('title', 'Generating Invoice...');
+            payButton.disabled = true; // Disable while fetching
+
+            try {
+                const ln = new LightningAddress(lightningAddress);
+                await ln.fetch(); // Fetch LNURL data
+
+                console.log(`Requesting ${amountSats} sat invoice from ${lightningAddress}`);
+                invoice = await ln.requestInvoice({ satoshi: amountSats });
+                console.log('Invoice received:', invoice.paymentRequest);
+
+                // Set invoice on the button - this triggers the modal automatically
+                payButton.setAttribute('invoice', invoice.paymentRequest);
+                payButton.setAttribute('title', 'Pay 1 Sat'); // Reset title
+                payButton.disabled = false; // Re-enable button
+
+                // 2. Start polling to check for external payments
+                if (checkPaymentInterval) clearInterval(checkPaymentInterval); // Clear previous interval if any
+                checkPaymentInterval = setInterval(async () => {
+                    if (invoice && !payButton.disabled) { // Only check if we have an invoice and button is not paid/disabled
+                        try {
+                            console.log('Polling for payment status...');
+                            const paid = await invoice.isPaid();
+                            if (paid && invoice.preimage) {
+                                console.log('External payment detected!');
+                                // Set preimage attribute to update the button/modal state
+                                payButton.setAttribute('preimage', invoice.preimage);
+                                handlePaymentSuccess(invoice.preimage);
+                            }
+                        } catch (error) {
+                            console.error('Error checking payment status:', error);
+                            // Stop polling on error to avoid spamming
+                            clearInterval(checkPaymentInterval);
+                            checkPaymentInterval = null;
+                        }
+                    } else {
+                         // Stop polling if invoice is null or button is disabled (paid)
+                        clearInterval(checkPaymentInterval);
+                        checkPaymentInterval = null;
+                    }
+                }, 3000); // Check every 3 seconds
+
+            } catch (error) {
+                console.error('Error fetching invoice:', error);
+                alert(`Error fetching invoice: ${error.message}`);
+                payButton.setAttribute('title', 'Error - Try Again');
+                payButton.disabled = false; // Re-enable on error
+            }
+        });
+
+        // 3. Listen for payments made via WebLN within the modal
+        payButton.addEventListener('bc:onpaid', (event) => {
+            console.log('Payment received via bc:onpaid event:', event.detail);
+            handlePaymentSuccess(event.detail.preimage);
+        });
+
+        // Optional: Clean up interval when the window is closed/unloaded
+        window.addEventListener('beforeunload', () => {
+            if (checkPaymentInterval) {
+                clearInterval(checkPaymentInterval);
+            }
+        });
+
+    </script>
+</body>
+</html>

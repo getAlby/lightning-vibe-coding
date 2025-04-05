@@ -1,0 +1,3 @@
+Create a blank html page and display a bitcoin connect pay button in the middle. When clicked it should generate an invoice from rolznz@getalby.com for 1 satoshi using @getalby/lightning-tools. Once the invoice is paid, show some confetti. Make sure to handle external payments too.
+
+Before you start, fetch the README from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-lightning-tools/blob/master/README.md so you have the latest information.
