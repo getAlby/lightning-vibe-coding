@@ -16,15 +16,27 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
 ### Single HTML page
 
 - Paywall Confetti (Shows confetti after successful payment) - [Deepseek](html/paywall-confetti/deepseek-chat-v3-0324:free/README.md) - [Gemini](html/paywall-confetti/gemini-2.5-pro/README.md)
+  - Features: Bitcoin Connect, Lightning Tools
 - Endless Runner game (Pay to continue playing after player dies) - [Deepseek](html/endless-runner-game/deepseek-chat-v3-0324:free/README.md)
+  - Features: Bitcoin Connect, Lightning Tools
 
 ### Express app
 
 - Coinflip game (Pay 10 sats but earn 20 if you guess correctly) - [Deepseek](express/coinflip/deepseek-chat-v3-0324:free/README.md)
+  - Features: Nostr Wallet Connect, Bitcoin Connect
+
+### NodeJS app
+
+- NWC CLI (connect a wallet and interact with it via CLI) - [Quasar Alpha](node/nwc-cli/quasar-alpha/README.md)
+  - Features: Nostr Wallet Connect, Nostr Wallet Auth
 
 ## How it works
 
-Currently most LLMs have trouble with getting up-to-date info which can cause them to "guess" how payments should be implemented. So, we work around this by asking the LLM to fetch the README and read it first.
+Currently most LLMs have trouble with getting up-to-date info which can cause them to "guess" how payments should be implemented. So, we can work around this by one of the following:
+
+- downloading the NPM package and asking them to read it (e.g. `install @getalby/sdk@4.1.0 and then read the package to understand how the NWCClient works`)
+- asking the LLM to fetch the README and read it first (e.g. `fetch https://raw.githubusercontent.com/getAlby/js-sdk/refs/heads/master/README.md`)
+- ask it to read the latest esm.sh e.g. (`fetch https://esm.sh/@getalby/sdk@4.1.0/es2022/sdk.mjs`)
 
 ### LLM Options
 
@@ -37,10 +49,13 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
 3. **Cline + Deepseek Chat v3 Free**
    - Available on [OpenRouter](https://openrouter.ai/deepseek/deepseek-chat-v3-0324:free)
    - Free (limited use)
-4. **Cline + Claude 3.7**
+4. **Roo Code + Quasar Alpha**
+   - Available on [OpenRouter](https://openrouter.ai/openrouter/quasar-alpha)
+   - Free (limited use)
+5. **Cline + Claude 3.7**
    - Get API key from [Anthropic Console](https://console.anthropic.com/)
    - Top up with Credit card (No free plan)
-5. **Other Editors**
+6. **Other Editors**
    - [Cursor](https://cursor.com) (Limited free queries, pro plan with credit card)
    - [Windsurf](https://windsurf.com/editor) (Limited free queries, pro plan with credit card)
 

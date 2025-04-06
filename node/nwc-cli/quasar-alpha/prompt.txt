@@ -1,0 +1,30 @@
+Make an NWC CLI tool.
+
+it should have help and a login function where you paste a NWC string OR use a QR code to generate NWA QR code,
+and also a logout function.
+
+the NWC string should be stored in a file in the same directory but make sure there is a gitignore file so I don't actually commit it. If the user logs out the file should be removed.
+
+If I start and the file exists it should automatically create the client which should be persisted for the entire app duration, unless the user logs out.
+
+If the user logs out, also remove the NWC string from the file.
+
+The CLI tool should have ALL the commands of the NWCCLient as well as subscription support and a way to exit out of subscribing.
+
+It should support msat by default but also sats (e.g. make_invoice --amount 10000 or --amount_sat 10)
+
+Make sure all commands support all possible parameters of the method.
+
+make it a nice CLI tool with help for each command too. Use the commander library for this.
+
+When I type npm start it should start the tool and show a welcome message that the user should login if they aren't already and tell them to use the help command for more info.
+
+If I type npm start on its own, the app should keep running and I should be able to type multiple commands from within the app. (Support both single-command invocation AND interactive CLI shell.)
+
+The interactive CLI shell should use the existing commander commands, but make sure that the commander commands do not kill the process after finishing.
+
+To install use @getalby/sdk version 4.1.0 and make sure to add websocket-polyfill 0.0.3 as a dependency too.
+
+After installing make sure to read the @getalby/sdk npm package so you understand how it works.
+
+Build the app inside the node/nwc-cli-quasar-alpha/app directory.
