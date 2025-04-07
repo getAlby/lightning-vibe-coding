@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Endless Runner</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Arial', sans-serif;
+            touch-action: manipulation; /* Prevent double-tap zoom */
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Max width for larger screens */
+            height: 300px;
+            background-color: #87CEEB; /* Sky blue */
+            border: 1px solid #000;
+            overflow: hidden; /* Keep elements inside */
+        }
+        #player {
+            position: absolute;
+            bottom: 10px; /* Start on the ground */
+            left: 50px;
+            width: 30px;
+            height: 30px;
+            background-color: #FF6347; /* Tomato red */
+            border-radius: 5px;
+        }
+        .obstacle {
+            position: absolute;
+            bottom: 10px; /* On the ground */
+            background-color: #228B22; /* Forest green */
+        }
+        #ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #D2B48C; /* Tan */
+        }
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            z-index: 10;
+        }
+        .score-update-animation {
+            animation: scoreUpdate 0.5s ease-out;
+        }
+        @keyframes scoreUpdate {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 20;
+            visibility: hidden; /* Hidden by default */
+            opacity: 0;
+            transition: visibility 0s, opacity 0.5s linear;
+        }
+        #game-over-screen.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        #game-over-screen h2 {
+            margin-bottom: 20px;
+        }
+        #game-over-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        #restart-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #pay-button-container {
+            /* Container for the bc-pay-button */
+        }
+        /* Bitcoin Connect Button Styling (Optional - can be customized further) */
+        bc-pay-button {
+             --bc-color-brand: #FF9900; /* Alby Orange */
+             --bc-color-brand-dark: #FFAD33;
+             --bc-color-brand-button-text: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score-board">
+            Level: <span id="level">1</span> | Jumps: <span id="jumps">1</span>
+        </div>
+        <div id="player"></div>
+        <div id="ground"></div>
+        <div id="game-over-screen">
+            <h2>Game Over!</h2>
+            <div id="game-over-buttons">
+                <div id="pay-button-container">
+                    <!-- Bitcoin Connect button will be added here -->
+                </div>
+                <button id="restart-button">Restart</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import necessary functions/classes
+        import { init } from 'https://esm.sh/@getalby/bitcoin-connect@3.7.0';
+        import 'https://esm.sh/@getalby/bitcoin-connect@3.7.0'; // Import components
+        import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0";
+        import confetti from 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/+esm';
+
+        // Game Elements
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const ground = document.getElementById('ground');
+        const scoreBoard = document.getElementById('score-board');
+        const levelDisplay = document.getElementById('level');
+        const jumpsDisplay = document.getElementById('jumps');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const payButtonContainer = document.getElementById('pay-button-container');
+        const restartButton = document.getElementById('restart-button');
+
+        // Game State
+        let gameState = 'playing'; // 'playing', 'gameOver'
+        let playerLevel = 1;
+        let jumpsRemaining = 1;
+        let jumpsMadeThisLevel = 0;
+        let playerY = 10; // Position from bottom
+        let playerVelocityY = 0;
+        let gravity = 0.6;
+        let jumpPower = 12;
+        let gameSpeed = 3; // Reduced initial speed
+        let minGameSpeed = 3; // Reduced initial speed
+        let maxGameSpeed = 12; // Reduced max speed slightly
+        let speedIncreaseRate = 0.0005; // Reduced speed increase rate
+        let obstacles = [];
+        let obstacleSpawnTimer = 0;
+        let minObstacleDistance = 250; // Min distance between obstacles
+        let maxObstacleDistanceVariance = 200; // Max additional random distance
+        let nextObstacleDistance = 0;
+        let gameLoopId = null;
+        let currentInvoice = null; // To store the current invoice object for polling
+        let paymentCheckInterval = null;
+
+        // Constants
+        const GROUND_HEIGHT = 10;
+        const PLAYER_HEIGHT = 30;
+        const PLAYER_WIDTH = 30;
+        const PLAYER_X = 50; // Fixed horizontal position
+
+        // --- Bitcoin Connect & Lightning ---
+        const recipientLightningAddress = 'rolznz@getalby.com';
+        const paymentAmountSats = 1;
+        let ln = null; // LightningAddress instance
+
+        async function initializeLightning() {
+            try {
+                init({ appName: 'Endless Runner Game' });
+                ln = new LightningAddress(recipientLightningAddress);
+                await ln.fetch(); // Fetch LNURL data upfront
+                console.log('Lightning Address details fetched for:', recipientLightningAddress);
+            } catch (error) {
+                console.error("Failed to initialize Lightning Address:", error);
+                // Handle error - maybe disable pay button?
+            }
+        }
+
+        async function requestPayment() {
+            if (!ln) {
+                console.error("Lightning Address not initialized.");
+                alert("Payment system error. Please try restarting.");
+                return;
+            }
+            if (paymentCheckInterval) clearInterval(paymentCheckInterval); // Clear previous interval if any
+
+            try {
+                console.log(`Requesting ${paymentAmountSats} sat invoice from ${recipientLightningAddress}...`);
+                // Request a new invoice every time
+                currentInvoice = await ln.requestInvoice({ satoshi: paymentAmountSats });
+
+                if (currentInvoice && currentInvoice.paymentRequest) {
+                    console.log("Invoice received:", currentInvoice.paymentRequest);
+                    createPayButton(currentInvoice.paymentRequest);
+                    startPaymentPolling();
+                } else {
+                    throw new Error("Failed to retrieve invoice.");
+                }
+            } catch (error) {
+                console.error("Error requesting invoice:", error);
+                payButtonContainer.innerHTML = `<p style="color: red;">Error creating payment request. Try again later.</p>`;
+            }
+        }
+
+        function createPayButton(invoice) {
+            // Clear previous button/message
+            payButtonContainer.innerHTML = '';
+
+            const payButton = document.createElement('bc-pay-button');
+            payButton.setAttribute('invoice', invoice);
+            // payButton.setAttribute('payment-methods', 'all'); // Default is all
+
+            payButton.addEventListener('bc:onpaid', (event) => {
+                console.log('Payment successful via WebLN!', event.detail);
+                handleSuccessfulPayment(event.detail.preimage);
+            });
+
+             payButton.addEventListener('click', (event) => {
+                // If invoice is missing for some reason when clicking, try refetching
+                if (!payButton.getAttribute('invoice')) {
+                    console.warn("Pay button clicked without invoice, attempting to refetch...");
+                    event.preventDefault(); // Prevent modal opening immediately
+                     requestPayment(); // Try to get a new invoice and update the button
+                }
+             });
+
+            payButtonContainer.appendChild(payButton);
+        }
+
+        function startPaymentPolling() {
+            if (!currentInvoice) return;
+
+            paymentCheckInterval = setInterval(async () => {
+                if (gameState !== 'gameOver' || !currentInvoice) {
+                     clearInterval(paymentCheckInterval);
+                     paymentCheckInterval = null;
+                     return;
+                }
+                try {
+                    // console.log("Polling invoice status..."); // Optional: for debugging
+                    const paid = await currentInvoice.verifyPayment();
+                    if (paid && currentInvoice.preimage) {
+                        console.log('Payment successful via polling!');
+                        handleSuccessfulPayment(currentInvoice.preimage);
+                    }
+                } catch (error) {
+                    console.error("Error polling payment status:", error);
+                    // Don't stop polling on error unless it's fatal
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        function handleSuccessfulPayment(preimage) {
+             if (gameState !== 'gameOver') return; // Prevent double handling
+
+             console.log("Handling successful payment. Preimage:", preimage);
+             if (paymentCheckInterval) clearInterval(paymentCheckInterval);
+             paymentCheckInterval = null;
+             currentInvoice = null; // Clear the invoice
+
+             // --- Update Bitcoin Connect Button State ---
+             const payButton = payButtonContainer.querySelector('bc-pay-button');
+             if (payButton) {
+                 // Set the preimage attribute to update the button's internal state to 'paid'
+                 payButton.setAttribute('preimage', preimage);
+                 console.log('Updated bc-pay-button with preimage.');
+             } else {
+                 console.warn('Could not find bc-pay-button to update state after polling.');
+             }
+             // --- End Update ---
+
+
+             // 1. Confetti!
+             confetti({
+                 particleCount: 150,
+                  spread: 180,
+                  origin: { y: 0.6 }
+              });
+
+             // Add a delay before resuming to allow modal to close
+             setTimeout(() => {
+                 if (gameState !== 'gameOver') return; // Check again in case state changed during delay
+
+                 // 2. Restore player state
+                 playerLevel = playerLevel; // Keep current level
+                 jumpsRemaining = playerLevel; // Restore jumps
+             jumpsMadeThisLevel = 0; // Reset jumps for the level
+             updateScoreDisplay();
+
+             // 3. Clear obstacles
+             obstacles.forEach(obstacle => obstacle.element.remove());
+             obstacles = [];
+             obstacleSpawnTimer = 0; // Reset spawn timer
+             nextObstacleDistance = 0; // Allow immediate spawn
+
+                 // 4. Resume game
+                 hideGameOverScreen();
+                 gameState = 'playing';
+                 // No need to restart gameLoop, it should still be running but paused by gameState check
+
+             }, 2000); // 2-second delay
+         }
+
+        // --- Game Logic ---
+        function updateScoreDisplay(levelChanged = false, jumpsChanged = false) {
+            levelDisplay.textContent = playerLevel;
+            jumpsDisplay.textContent = jumpsRemaining;
+
+            if (levelChanged) {
+                levelDisplay.parentElement.classList.add('score-update-animation');
+                setTimeout(() => levelDisplay.parentElement.classList.remove('score-update-animation'), 500);
+            }
+            if (jumpsChanged) {
+                 jumpsDisplay.parentElement.classList.add('score-update-animation');
+                 setTimeout(() => jumpsDisplay.parentElement.classList.remove('score-update-animation'), 500);
+            }
+        }
+
+        function jump() {
+            if (jumpsRemaining > 0) {
+                playerVelocityY = jumpPower;
+                jumpsRemaining--;
+                jumpsMadeThisLevel++;
+                updateScoreDisplay(false, true); // Jumps changed
+            }
+        }
+
+        function spawnObstacle() {
+            const element = document.createElement('div');
+            element.classList.add('obstacle');
+
+            // Difficulty scaling
+            const maxPossibleHeight = Math.min(100, 20 + playerLevel * 10); // Cap height
+            const minPossibleHeight = 15;
+            const height = Math.random() * (maxPossibleHeight - minPossibleHeight) + minPossibleHeight;
+
+            const maxPossibleWidth = Math.min(60, 15 + playerLevel * 5); // Cap width
+            const minPossibleWidth = 15;
+            const width = Math.random() * (maxPossibleWidth - minPossibleWidth) + minPossibleWidth;
+
+            element.style.width = `${width}px`;
+            element.style.height = `${height}px`;
+            element.style.left = `${gameContainer.offsetWidth}px`; // Start off-screen right
+
+            gameContainer.appendChild(element);
+            obstacles.push({ element, width, height, x: gameContainer.offsetWidth });
+        }
+
+        function updateObstacles() {
+            let passedObstacle = false;
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obstacle = obstacles[i];
+                obstacle.x -= gameSpeed;
+                obstacle.element.style.left = `${obstacle.x}px`;
+
+                // Check for passing the obstacle
+                if (!obstacle.passed && obstacle.x + obstacle.width < PLAYER_X) {
+                    obstacle.passed = true;
+                    passedObstacle = true;
+                }
+
+                // Collision Check (AABB)
+                if (
+                    PLAYER_X < obstacle.x + obstacle.width &&
+                    PLAYER_X + PLAYER_WIDTH > obstacle.x &&
+                    playerY < GROUND_HEIGHT + obstacle.height // Player bottom is below obstacle top
+                    // No need to check player top vs obstacle bottom since obstacles are grounded
+                ) {
+                    gameOver();
+                    return; // Stop processing obstacles on game over
+                }
+
+                // Remove off-screen obstacles
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacle.element.remove();
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            if (passedObstacle) {
+                playerLevel += (jumpsMadeThisLevel + 1);
+                jumpsMadeThisLevel = 0; // Reset jumps count for the new level
+                jumpsRemaining = playerLevel; // Reset jumps allowed to the new level
+                updateScoreDisplay(true, true); // Level and jumps changed
+            }
+
+            // Spawn new obstacles
+            obstacleSpawnTimer += gameSpeed;
+            if (obstacleSpawnTimer >= nextObstacleDistance) {
+                 spawnObstacle();
+                 obstacleSpawnTimer = 0;
+                 // Calculate next spawn distance based on current speed and level
+                 const baseDistance = minObstacleDistance + Math.random() * maxObstacleDistanceVariance;
+                 // Ensure minimum gap based on speed (longer gap for faster speed)
+                 const speedAdjustedDistance = baseDistance + gameSpeed * 20;
+                 // Ensure gap is jumpable based on level (jump height/distance increases implicitly with level via more jumps)
+                 // This is tricky to get perfect, might need more refined logic based on jump physics
+                 nextObstacleDistance = Math.max(baseDistance, speedAdjustedDistance);
+            }
+        }
+
+        function updatePlayer() {
+            playerVelocityY -= gravity;
+            playerY += playerVelocityY;
+
+            // Ground check
+            if (playerY <= GROUND_HEIGHT) {
+                playerY = GROUND_HEIGHT;
+                playerVelocityY = 0;
+                if (jumpsRemaining !== playerLevel) { // Only reset if needed and animate
+                    jumpsRemaining = playerLevel;
+                    updateScoreDisplay(false, true); // Jumps changed
+                }
+            }
+
+            // Prevent jumping through ceiling (though unlikely with current setup)
+            if (playerY + PLAYER_HEIGHT > gameContainer.offsetHeight) {
+                 playerY = gameContainer.offsetHeight - PLAYER_HEIGHT;
+                 playerVelocityY = 0;
+            }
+
+
+            player.style.bottom = `${playerY}px`;
+        }
+
+        function increaseSpeed() {
+            if (gameSpeed < maxGameSpeed) {
+                gameSpeed += speedIncreaseRate;
+            }
+        }
+
+        function gameLoop() {
+            if (gameState === 'playing') {
+                updatePlayer();
+                updateObstacles();
+                increaseSpeed();
+            }
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            if (gameState === 'gameOver') return; // Prevent multiple calls
+            console.log("Game Over!");
+            gameState = 'gameOver';
+            showGameOverScreen();
+            requestPayment(); // Request invoice for the pay button
+        }
+
+        function showGameOverScreen() {
+            gameOverScreen.classList.add('visible');
+        }
+
+        function hideGameOverScreen() {
+            gameOverScreen.classList.remove('visible');
+            payButtonContainer.innerHTML = ''; // Clear pay button
+            if (paymentCheckInterval) clearInterval(paymentCheckInterval); // Stop polling
+            paymentCheckInterval = null;
+            currentInvoice = null;
+        }
+
+        function restartGame() {
+            console.log("Restarting game...");
+            hideGameOverScreen();
+
+            // Reset player state
+            playerLevel = 1;
+            jumpsRemaining = 1;
+            jumpsMadeThisLevel = 0;
+            playerY = GROUND_HEIGHT;
+            playerVelocityY = 0;
+            updateScoreDisplay(true, true); // Reset display
+
+            // Reset game state
+            gameSpeed = minGameSpeed;
+            obstacles.forEach(obstacle => obstacle.element.remove());
+            obstacles = [];
+            obstacleSpawnTimer = 0;
+            nextObstacleDistance = 0; // Allow immediate spawn
+
+            // Ensure player is visually reset
+            player.style.bottom = `${playerY}px`;
+
+            gameState = 'playing';
+            // Restart game loop if it was stopped (it wasn't in this implementation)
+            if (!gameLoopId) {
+                 gameLoop();
+            }
+        }
+
+        // Event Listeners
+        function handleInput() {
+             if (gameState === 'playing') {
+                 jump();
+             }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent page scrolling
+                handleInput();
+            }
+        });
+
+        // Use click/touch for mobile friendliness
+        gameContainer.addEventListener('touchstart', (e) => {
+             e.preventDefault(); // Prevent triggering click/scroll etc.
+             handleInput();
+        }, { passive: false }); // Need passive: false to call preventDefault
+
+         gameContainer.addEventListener('mousedown', (e) => {
+             // Allow clicking buttons on game over screen
+             if (gameState === 'playing') {
+                 e.preventDefault();
+                 handleInput();
+             }
+         });
+
+
+        restartButton.addEventListener('click', restartGame);
+
+        // --- Initialization ---
+        async function initGame() {
+            await initializeLightning(); // Initialize lightning first
+            updateScoreDisplay(true, true); // Initial display setup
+            gameLoop(); // Start the game loop
+        }
+
+        initGame();
+
+    </script>
+</body>
+</html>

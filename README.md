@@ -15,9 +15,9 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
 
 ### Single HTML page
 
-- Paywall Confetti (Shows confetti after successful payment) - [Deepseek](html/paywall-confetti/deepseek-chat-v3-0324:free/README.md) - [Gemini](html/paywall-confetti/gemini-2.5-pro/README.md)
+- Paywall Confetti (Shows confetti after successful payment) - [Deepseek](html/paywall-confetti/deepseek-chat-v3-0324:free/README.md) - [Gemini](html/paywall-confetti/gemini-2.5-pro-exp-03-025/README.md)
   - Features: Bitcoin Connect, Lightning Tools
-- Endless Runner game (Pay to continue playing after player dies) - [Deepseek](html/endless-runner-game/deepseek-chat-v3-0324:free/README.md)
+- Endless Runner game (Pay to continue playing after player dies) - [Deepseek](html/endless-runner-game/deepseek-chat-v3-0324:free/README.md)  - [Gemini](html/endless-runner-game/gemini-2.5-pro-exp-03-025/README.md)
   - Features: Bitcoin Connect, Lightning Tools
 
 ### Express app
