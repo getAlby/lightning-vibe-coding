@@ -1,0 +1,9 @@
+Make a classic snake game but when you lose you have the option to pay to revive, or restart.
+
+It should be made all packaged in a single HTML file. Make sure to not use any other local files. Any external scripts needed should be from a CDN.
+
+When the snake revives, make sure it's done in a way that the player does not instantly lose again. The score and snake length must be the same as before the player lost.
+
+The pay to revive button should be a bitcoin connect pay button in the middle which will request a payment of 1 satoshi from rolznz@getalby.com. Once the invoice is paid, show a confetti animation and set the preimage on the payment button (to update bitcoin connect state), and then wait 5 second before reviving the snake. while waiting the 5 seconds show a countdown timer "reviving in N seconds" where N is the remaining time. Make sure to allow the user to pay either by connecting their wallet or paying externally (by polling the invoice). The pay button element should be completely re-created each time the player loses.
+
+Before you start, fetch the READMEs one at a time from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-lightning-tools/blob/master/README.md so you have the latest information (just read the output directly, don't save the files unless you fail to read the content). Make sure to only use the imports specified in the README, do not guess any new imports.
