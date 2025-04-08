@@ -60,6 +60,7 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
 6. **Other Editors**
    - [Cursor](https://cursor.com) (Limited free queries, pro plan with credit card)
    - [Windsurf](https://windsurf.com/editor) (Limited free queries, pro plan with credit card)
+   - [Genspark.ai](https://genspark.ai) (Web app, Limited free credits, paid plan with credit card)
 
 ## Contributing
 
