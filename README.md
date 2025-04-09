@@ -88,6 +88,7 @@ Please include ones that you have tested that work OK, and include whether they 
 - create an in-game store where users can buy vanity items with lightning
 - create a lightning prism app powered by NWC
 - build an MCP server that requires payments (such as a Stacker news client), that can be paid by [nwc-mcp-server](https://github.com/getalby/nwc-mcp-server)
+- build an N8N workflow for an AI zapvertising agent
 - Build the same app with a new agent software or LLM. It's cool to see what works and what doesn't!
 - Submit your ideas here and maybe someone else will build them!
 
