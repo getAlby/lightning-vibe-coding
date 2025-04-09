@@ -85,6 +85,7 @@ Please include ones that you have tested that work OK, and include whether they 
 - create a lightning lotto app where each satoshi paid increases the time before the winner is drawn
 - create an app like [github star history](https://github.com/star-history) but for V4V payments
 - create an AI workflow triggered by a received payment using an NWC receive-only connection
+- create an in-game store where users can buy vanity items with lightning
 - create a lightning prism app powered by NWC
 - build an MCP server that requires payments (such as a Stacker news client), that can be paid by [nwc-mcp-server](https://github.com/getalby/nwc-mcp-server)
 - Build the same app with a new agent software or LLM. It's cool to see what works and what doesn't!
