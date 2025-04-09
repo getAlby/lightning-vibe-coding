@@ -40,7 +40,7 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
 - asking the LLM to fetch the README and read it first (e.g. `fetch https://raw.githubusercontent.com/getAlby/js-sdk/refs/heads/master/README.md`)
 - ask it to read the latest esm.sh e.g. (`fetch https://esm.sh/@getalby/sdk@4.1.0/es2022/sdk.mjs`)
 
-### LLM Options
+### Agent / LLM Options
 
 1. **Cline + PPQ.ai + Claude 3.7**
    - Get API key from [PPQ.ai](https://ppq.ai/api-docs)
@@ -61,6 +61,7 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
    - [Cursor](https://cursor.com) (Limited free queries, pro plan with credit card)
    - [Windsurf](https://windsurf.com/editor) (Limited free queries, pro plan with credit card)
    - [Genspark.ai](https://genspark.ai) (Web app, Limited free credits, paid plan with credit card)
+   - [Replit Agent v2](https://replit.com) (Web app, Limited free credits, paid plan with credit card)
 
 ## Contributing
 
@@ -72,9 +73,19 @@ Pull requests welcome! Please ensure that you follow the current directories as 
 - All prompts are refined and work with one-shot commands unless specified
 - Include clear README instructions on what tools were used to execute the prompt, how to view the output, and prompt.txt for each implementation
 
-### Contributing LLM options
+### Contributing LLM/Agent options
 
 Please include ones that you have tested that work OK, and include whether they are free or not and how they can be paid
+
+### Need an Idea or want an idea built?
+
+- create an app that uses nostr for identity
+- create an app that uses nostr relays for simple backend storage
+- create autonomous ai agents performing machine to machine payments using lightning
+- create a lightning lotto app where each satoshi paid increases the time before the winner is drawn
+- create an app like [github star history](https://github.com/star-history) but for V4V payments
+- Build the same app with a new agent software or LLM. It's cool to see what works and what doesn't!
+- Submit your ideas here and maybe someone else will build them!
 
 ## License
 
