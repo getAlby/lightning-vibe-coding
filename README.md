@@ -60,8 +60,11 @@ Currently most LLMs have trouble with getting up-to-date info which can cause th
 6. **Other Editors**
    - [Cursor](https://cursor.com) (Limited free queries, pro plan with credit card)
    - [Windsurf](https://windsurf.com/editor) (Limited free queries, pro plan with credit card)
-   - [Genspark.ai](https://genspark.ai) (Web app, Limited free credits, paid plan with credit card)
-   - [Replit Agent v2](https://replit.com) (Web app, Limited free credits, paid plan with credit card)
+   - [Genspark.ai](https://genspark.ai) (Web app, Limited free credits, paid plan with credit card. NOTE: only works to make client-side apps)
+   - [Replit Agent v2](https://replit.com) (Web app, Limited free credits, paid plan with credit card NOTE: currently it is does not work well and makes many bugs)
+   - [VSCode Copilot](https://code.visualstudio.com/docs/copilot/overview) (Limited free credits, paid plan with credit card)
+   - [Lovable.dev](https://lovable.dev/) (Limited free credits, paid plan with credit card. NOTE: cannot do requests to fetch README content, you must paste it into the prompt. Can do full stack apps using Supabase integration)
+   - [Firebase studio](https://studio.firebase.google.com/) NOTE: seems to not work well currently, needs more testing
 
 ## Contributing
 
@@ -89,6 +92,7 @@ Please include ones that you have tested that work OK, and include whether they 
 - create a lightning prism app powered by NWC
 - build an MCP server that requires payments (such as a Stacker news client), that can be paid by [nwc-mcp-server](https://github.com/getalby/nwc-mcp-server)
 - build an N8N workflow for an AI zapvertising agent
+- Build an app that can summarize github repositories (or multiple repositories) into a single-pager that you can feed to AI to consume.
 - Build the same app with a new agent software or LLM. It's cool to see what works and what doesn't!
 - Submit your ideas here and maybe someone else will build them!
 
