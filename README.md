@@ -6,9 +6,8 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
 
 ## Getting Started
 
-### Prerequisites
-
-- Online agent editor ([Genspark.ai](https://www.genspark.ai/)), or local agent code editor (Windsurf/Cursor) or VS Code agent plugin (Cline/Roo code with a configured LLM provider)
+- A [NWC](https://nwc.dev)-enabled lightning wallet. Get one in minutes by connecting to [Alby Hub](https://albyhub.com/), [coinos](https://coinos.io/apps/new), [Primal](https://primal.net/downloads), [lnwallet.app](https://lnwallet.app/), [Yakihonne](https://yakihonne.com/), [or other NWC-enabled wallets](https://github.com/getAlby/awesome-nwc?tab=readme-ov-file#nwc-wallets).
+- Online agent editor ([Genspark.ai](https://www.genspark.ai/) - frontend apps only), or local agent code editor (Windsurf/Cursor) or VS Code agent plugin (Cline/Roo code with a configured LLM provider)
 - Copy and paste one of the example prompts below and adapt it to your needs.
 
 ## Example Prompts
