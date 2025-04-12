@@ -20,6 +20,8 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
   - Features: Bitcoin Connect, Lightning Tools
 - Snake game (Pay to continue playing after player dies) - [Genspark.ai](html/snake-game/genspark.ai/README.md)
   - Features: Bitcoin Connect, Lightning Tools
+- Nostr TODO app - [Gemini](https://github.com/rolznz/todostr)
+  - Features: Nostr Zaps, window.nostr and window.webln
 
 ### Express app
 
@@ -91,6 +93,9 @@ Please include ones that you have tested that work OK, and include whether they 
 - create a lightning prism app powered by NWC
 - build an MCP server that requires payments (such as a Stacker news client), that can be paid by [nwc-mcp-server](https://github.com/getalby/nwc-mcp-server)
 - build an N8N workflow for an AI zapvertising agent
+- build an N8N NWC node
+- build a vibe coding platform centered around Bitcoin and Nostr
+- build an anonymous app hosting platform paid for with a single lightning payment
 - Build an app that can summarize github repositories (or multiple repositories) into a single-pager that you can feed to AI to consume.
 - Build the same app with a new agent software or LLM. It's cool to see what works and what doesn't!
 - Submit your ideas here and maybe someone else will build them!
