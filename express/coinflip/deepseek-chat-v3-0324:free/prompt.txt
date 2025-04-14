@@ -42,4 +42,4 @@ Once the invoice is paid, poll the second endpoint to check the status of the co
 
 Once the user has connected is paid, show a confetti animation and set the preimage once the invoice is paid. Make sure to allow the user to pay either by connecting their wallet or paying externally (by polling the invoice). Do not modify the styling of the button in any way or add any text on the screen. Do not show any alert dialogs. Do not add any TODOs or "Optional" comments in the code.
 
-Before you start, fetch the READMEs from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-sdk/blob/master/README.md one at a time so you have the latest information. If you fail to read the content please print this as the app will not work correctly!
+Before you start, fetch the READMEs from https://raw.githubusercontent.com/getAlby/bitcoin-connect/refs/heads/master/README.md and https://raw.githubusercontent.com/getAlby/js-sdk/refs/heads/master/docs/nwc.md one at a time so you have the latest information. If you fail to read the content please print this as the app will not work correctly!

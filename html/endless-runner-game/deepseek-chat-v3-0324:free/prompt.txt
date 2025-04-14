@@ -32,6 +32,6 @@ If the player clicks restart, restart the game, setting the player level back to
 
 The pay to continue button should be a bitcoin connect pay button in the middle which will request a payment of 1 satoshi from rolznz@getalby.com. Once the invoice is paid, show a confetti animation and set the preimage once the invoice is paid. Make sure to allow the user to pay either by connecting their wallet or paying externally (by polling the invoice). The pay button element should be completely re-created each time the player dies.
 
-Before you start, fetch the READMEs one at a time from https://github.com/getAlby/bitcoin-connect/blob/master/README.md and https://github.com/getAlby/js-lightning-tools/blob/master/README.md so you have the latest information (just read the output directly, don't save the files unless you fail to read the content). Make sure to only use the imports specified in the README, do not guess any new imports.
+Before you start, fetch the READMEs one at a time from https://raw.githubusercontent.com/getAlby/bitcoin-connect/refs/heads/master/README.md and https://raw.githubusercontent.com/getAlby/js-lightning-tools/refs/heads/master/README.md so you have the latest information (just read the output directly, don't save the files unless you fail to read the content). Make sure to only use the imports specified in the README, do not guess any new imports.
 
 YOU ONLY HAVE ONE ATTEMPT, THIS IS A ONE-SHOT PROMPT, DO YOUR BEST AND DO NOT LEAVE TODOs!
