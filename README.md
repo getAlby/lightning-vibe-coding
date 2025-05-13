@@ -23,6 +23,11 @@ Example prompts to add Bitcoin Lightning payments to your app with vibe coding, 
 - Nostr TODO app - [Gemini](https://github.com/rolznz/todostr)
   - Features: Nostr Zaps, window.nostr and window.webln
 
+### React app
+
+- 2048 game with paid undo - [Replit Agent](react/2048/replit/README.md)
+  - Features: Bitcoin Connect, Lightning Tools
+
 ### Express app
 
 - Coinflip game (Pay 10 sats but earn 20 if you guess correctly) - [Deepseek](express/coinflip/deepseek-chat-v3-0324:free/README.md)

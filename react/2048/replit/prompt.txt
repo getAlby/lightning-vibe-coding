@@ -1,0 +1,22 @@
+Make a 2048 game in React with an extra button that gives users the ability to undo if they pay 21 sats.
+
+Here's how the user can connect their wallet and pay an invoice:
+
+<script type="module">
+import {requestProvider} from 'https://esm.sh/@getalby/bitcoin-connect@3.8.0';
+const weblnProvider = await requestProvider();
+
+// make an invoice for 2 sats
+const {paymentRequest} = await weblnProvider.makeInvoice({amount: 2, defaultMemo: "Optional invoice description"})
+
+// pay an invoice
+const {preimage} = await weblnProvider.sendPayment('lnbc...');
+
+Here's how to charge the user:
+
+import { LightningAddress } from "https://esm.sh/@getalby/lightning-tools@5.0.0";
+
+const ln = new LightningAddress("rolznz@getalby.com"};
+
+await ln.fetch();
+const invoice = await ln.requestInvoice({ satoshi: 21, comment: "2048 undo" });
